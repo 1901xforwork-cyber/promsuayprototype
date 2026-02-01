@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROMSUAY</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@100;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #C85A70;
+            --secondary: #E8717F;
+            --bg: #FBF5F3;
+            --text: #351A1F;
+            --gold: #FF8FA3;
+            --dark-gold: #A73D54;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; font-weight: 500; }
+        body { background-color: var(--bg); color: var(--text); display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 480px; background: white; min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow-x: hidden; }
+        
+        /* Header */
+        header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 15px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(200, 90, 112, 0.25); }
+        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; display: none; margin-right: 15px; }
+        .header-title { flex: 1; font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; }
+        .wallet-display { background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s; }
+        .wallet-display:hover { background: rgba(255,255,255,0.25); }
+
+        /* Pages */
+        .page { display: none; padding: 20px; padding-bottom: 80px; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Home Page */
+        .search-bar { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; }
+        .clinic-card { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; cursor: pointer; border: 1px solid #eee; }
+        .clinic-img { width: 100%; height: 160px; object-fit: cover; background: #ddd; }
+        .clinic-info { padding: 15px; }
+        .clinic-name { font-weight: bold; font-size: 1.1rem; }
+        .clinic-rating { color: var(--gold); margin: 5px 0; }
+        .clinic-stats { display: flex; gap: 15px; margin-top: 8px; font-size: 0.85rem; color: #666; }
+        .stat-item { display: flex; align-items: center; gap: 5px; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 400px; width: 90%; text-align: center; }
+        .modal-content h2 { margin-bottom: 20px; }
+        .qr-code { width: 200px; height: 200px; background: #f0f0f0; margin: 20px auto; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+        .modal-amount { font-size: 1.3rem; font-weight: bold; color: var(--primary); margin: 15px 0; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-confirm { background: var(--primary); color: white; }
+        .btn-cancel { background: #ddd; color: #666; }
+
+        /* History Tabs */
+        .history-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
+        .history-tab { padding: 10px 15px; cursor: pointer; border-bottom: 3px solid transparent; color: #666; }
+        .history-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .history-item { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .history-name { font-weight: bold; color: var(--text); }
+        .history-price { color: var(--primary); font-weight: bold; }
+        .history-date { font-size: 0.85rem; color: #999; }
+        .warranty-badge { background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+        .points-badge { background: #fff3e0; color: #f57c00; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+        
+        /* Detail Page */
+        .service-item { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
+        .service-info h4 { color: var(--primary); }
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .btn.disabled { background: #ccc; cursor: not-allowed; }
+
+        /* Wallet & Payment */
+        .payment-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .pay-method { border: 1px solid #ddd; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; }
+        .pay-method:hover { border-color: var(--primary); background: #fff5f8; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #eee; z-index: 100; }
+        .nav-item { text-align: center; cursor: pointer; color: #888; }
+        .nav-item.active { color: var(--primary); }
+
+        /* Modals & Alerts */
+        .alert { background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; line-height: 1.5; }
+        .reward-card { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(200, 90, 112, 0.35); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        <div class="header-title">PROMSUAY</div>
+        <div class="wallet-display" onclick="navigateTo('wallet-page')">
+            <i class="fas fa-wallet"></i> ฿<span id="wallet-balance">0</span>
+        </div>
+    </header>
+
+    <!-- Home Page -->
+    <div id="home-page" class="page active">
+        <input type="text" class="search-bar" placeholder="ค้นหาคลินิก, สำนักศัลยกรรม...">
+        <div id="clinic-list"></div>
+    </div>
+
+    <!-- Clinic Detail Page -->
+    <div id="detail-page" class="page">
+        <div id="clinic-detail-content"></div>
+        <h3 style="margin-top: 20px; margin-bottom: 10px;">บริการ / ศัลยกรรม</h3>
+        <div id="service-list"></div>
+    </div>
+
+    <!-- Wallet & Top-up Page -->
+    <div id="wallet-page" class="page">
+        <h2>กระเป๋าเงิน (Wallet)</h2>
+        <p>ยอดเงินคงเหลือ: ฿<span id="wallet-balance-big">0</span></p>
+        <br>
+        <h3>เติมเงินเข้าสู่ระบบ</h3>
+        <input type="number" id="topup-amount" class="search-bar" placeholder="ระบุจำนวนเงินที่ต้องการเติม (บาท)" style="margin-top: 10px;">
+        <div class="payment-methods">
+            <div class="pay-method" onclick="openPaymentMethod('qr')"><i class="fas fa-qrcode"></i><br>QR Payment</div>
+            <div class="pay-method" onclick="openPaymentMethod('promptpay')"><i class="fas fa-mobile-alt"></i><br>PromptPay</div>
+            <div class="pay-method" onclick="openPaymentMethod('card')"><i class="fas fa-credit-card"></i><br>Credit/Debit Card</div>
+        </div>
+    </div>
+
+    <!-- History Page -->
+    <div id="history-page" class="page">
+        <h2>ประวัติการสั่งซื้อ</h2>
+        <div class="history-tabs">
+            <div class="history-tab active" onclick="switchHistoryTab('purchase')">การซื้อ</div>
+            <div class="history-tab" onclick="switchHistoryTab('redeem')">การแลก Points</div>
+        </div>
+        <div id="purchase-history"></div>
+        <div id="redeem-history" style="display: none;"></div>
+    </div>
+
+    <!-- Confirmation / Success Page -->
+    <div id="success-page" class="page">
+        <div class="alert">
+            <strong>✅ ชำระเงินสำเร็จ!</strong><br><br>
+            คุณได้ทำการจองคอร์ส: <span id="booked-service"></span><br>
+            จำนวนเงิน: ฿<span id="booked-price"></span>
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #155724;">
+            <small>
+                <strong>ระบบคุ้มครอง Warranty (60 วัน):</strong><br>
+                เงินจำนวนนี้จะถูกเก็บไว้ที่แพลตฟอร์ม และจะโอนให้สถานประกอบการเมื่อคุณรับบริการแล้วและไม่มีการร้องเรียนภายใน 60 วัน
+            </small>
+        </div>
+        <button class="btn" onclick="navigateTo('home-page')" style="width: 100%;">กลับสู่หน้าหลัก</button>
+    </div>
+
+    <!-- Rewards Page -->
+    <div id="rewards-page" class="page">
+        <div class="reward-card">
+            <h2><i class="fas fa-star"></i> <span id="point-balance">0</span> Points</h2>
+            <small>ทุกยอดใช้จ่าย 5,000 บาท รับ 100 Points</small>
+        </div>
+        <h3>แลกสิทธิประโยชน์</h3>
+        <div id="rewards-list"></div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="navigateTo('home-page')"><i class="fas fa-home"></i><br>Home</div>
+        <div class="nav-item" onclick="navigateTo('rewards-page')"><i class="fas fa-gift"></i><br>Rewards</div>
+        <div class="nav-item" onclick="navigateTo('history-page')"><i class="fas fa-history"></i><br>History</div>
+        <div class="nav-item" onclick="navigateTo('wallet-page')"><i class="fas fa-wallet"></i><br>Wallet</div>
+    </div>
+
+    <!-- QR Code Payment Modal -->
+    <div id="qr-modal" class="modal">
+        <div class="modal-content">
+            <h2>QR Code Payment</h2>
+            <p>โปรดสแกน QR Code ด้านล่าง</p>
+            <div class="qr-code"><i class="fas fa-qrcode"></i></div>
+            <div class="modal-amount">฿<span id="qr-amount">0</span></div>
+            <p style="font-size: 0.9rem; color: #666;">คณะสักครู่...</p>
+            <div class="modal-buttons">
+                <button class="btn-confirm" onclick="confirmQRPayment()">✓ ชำระเงินแล้ว</button>
+                <button class="btn-cancel" onclick="closeQRModal()">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Data Store ---
+    let user = { wallet: 0, points: 0, purchaseHistory: [], redeemHistory: [] };
+    let historyStack = [];
+    let pendingTopUpAmount = 0;
+    let pendingPaymentMethod = '';
+
+    const clinics = [
+        { id: 1, name: "Aura Skin & Aesthetic Clinic", rating: 4.8, img: "cl1.png", detail: "คลินิกเสริมความงามระดับพรีเมียม เชี่ยวชาญด้านงานผิวและปรับรูปหน้า", verified: true, refundRate: 99.2, reviews: 245 },
+        { id: 2, name: "Seoul V-Line Plastic Surgery", rating: 4.9, img: "cl2.jpg", detail: "โรงพยาบาลศัลยกรรมมาตรฐานเกาหลี", verified: true, refundRate: 99.8, reviews: 189 },
+        { id: 3, name: "Doctor Beauty Hub", rating: 4.5, img: "cl3.jpg", detail: "คลินิกเวชกรรมเสริมความงาม ราคาย่อมเยา", verified: true, refundRate: 98.5, reviews: 156 },
+        { id: 4, name: "Perfect Face Clinic", rating: 4.7, img: "cl4.jpg", detail: "ผู้เชี่ยวชาญด้านการฉีดสารเติมเต็มและโบท็อกซ์", verified: true, refundRate: 99.0, reviews: 203 },
+        { id: 5, name: "Siam Grand Surgery Hospital", rating: 4.6, img: "cl5.jpeg", detail: "โรงพยาบาลศัลยกรรมครบวงจร เสริมหน้าอก เสริมจมูก", verified: true, refundRate: 99.5, reviews: 178 }
+    ];
+
+    const services = [
+        { id: 101, clinicId: 1, name: "Botox กราม + ลิฟต์กรอบหน้า", price: 3500 },
+        { id: 102, clinicId: 1, name: "Filler ร่องแก้ม 1 cc", price: 9000 },
+        { id: 103, clinicId: 1, name: "ลดริ้วรอยหน้าผาก เลเซอร์", price: 5500 },
+        { id: 104, clinicId: 2, name: "เสริมจมูก ซิลิโคนพรีเมียม", price: 25000 },
+        { id: 105, clinicId: 2, name: "ยกหน้า V-line ด้วยเทคโนโลยี", price: 15000 },
+        { id: 106, clinicId: 2, name: "ฉีด Ultherapy ยกกระชับหน้า", price: 18000 },
+        { id: 107, clinicId: 3, name: "เลเซอร์หน้าใส Pico", price: 1500 },
+        { id: 108, clinicId: 3, name: "ลดฝ้า จุดด่างดำด้วยเลเซอร์", price: 2500 },
+        { id: 109, clinicId: 3, name: "Botox ลิ้นด้านข้าง", price: 4000 },
+        { id: 110, clinicId: 4, name: "ฉีด Botox ตัวแข็ง", price: 3800 },
+        { id: 111, clinicId: 4, name: "Filler เสริมปาก", price: 7500 },
+        { id: 112, clinicId: 4, name: "ลดริ้วรอยตาด้วยเลเซอร์", price: 3200 },
+        { id: 113, clinicId: 5, name: "เสริมหน้าอก Motiva", price: 85000 },
+        { id: 114, clinicId: 5, name: "เสริมก้น ซิลิโคน", price: 95000 },
+        { id: 115, clinicId: 5, name: "Liposuction สมดุลรูปร่าง", price: 120000 }
+    ];
+
+    const rewards = [
+        { id: 1, name: "ฉีด Botox 50 Unit (ฟรี)", pointsRequired: 600, clinic: "จากคลินิกพันธมิตร", icon: "💉" },
+        { id: 2, name: "Filler ร่องแก้ม 0.5 cc (ฟรี)", pointsRequired: 900, clinic: "จากคลินิกพันธมิตร", icon: "✨" },
+        { id: 3, name: "เลเซอร์หน้าใส Pico 1 ครั้ง (ฟรี)", pointsRequired: 150, clinic: "จากคลินิกพันธมิตร", icon: "💡" },
+        { id: 4, name: "ส่วนลด 10% สำหรับบริการทั้งหมด", pointsRequired: 300, clinic: "ใช้ได้ทุกคลินิก", icon: "🎁" }
+    ];
+
+    // --- Navigation Logic ---
+    function navigateTo(pageId, pushToHistory = true) {
+        if (pushToHistory) {
+            const currentPage = document.querySelector('.page.active').id;
+            historyStack.push(currentPage);
+        }
+
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+
+        // Show/Hide Back Button
+        document.querySelector('.back-btn').style.display = historyStack.length > 0 ? 'block' : 'none';
+        
+        // Update Bottom Nav active state
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        if (pageId === 'home-page') document.querySelectorAll('.nav-item')[0].classList.add('active');
+        else if (pageId === 'rewards-page') document.querySelectorAll('.nav-item')[1].classList.add('active');
+        else if (pageId === 'history-page') document.querySelectorAll('.nav-item')[2].classList.add('active');
+        else if (pageId === 'wallet-page') document.querySelectorAll('.nav-item')[3].classList.add('active');
+    }
+
+    function goBack() {
+        if (historyStack.length > 0) {
+            const prevPage = historyStack.pop();
+            navigateTo(prevPage, false);
+        }
+    }
+
+    // --- Rendering Logic ---
+    function renderHome() {
+        const list = document.getElementById('clinic-list');
+        list.innerHTML = '';
+        clinics.forEach(c => {
+            const stars = '★'.repeat(Math.floor(c.rating)) + (c.rating % 1 !== 0 ? '☆' : '');
+            list.innerHTML += `
+                <div class="clinic-card" onclick="viewClinic(${c.id})">
+                    <img src="${c.img}" class="clinic-img" alt="${c.name}" onerror="this.src='https://via.placeholder.com/400x160?text=${encodeURIComponent(c.name)}'">
+                    <div class="clinic-info">
+                        <div class="clinic-name">${c.name}</div>
+                        <div class="clinic-rating">${stars} ${c.rating}</div>
+                        <div class="clinic-stats">
+                            <div class="stat-item"><i class="fas fa-comment-dots"></i> ${c.reviews} รีวิว</div>
+                        </div>
+                        <small style="color: #666;">${c.detail}</small>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function viewClinic(id) {
+        const clinic = clinics.find(c => c.id === id);
+        const clinicServices = services.filter(s => s.clinicId === id);
+        
+        // Render Detail Header
+        const detailHTML = `
+            <img src="${clinic.img}" class="clinic-img" style="border-radius: 12px;" onerror="this.src='https://via.placeholder.com/400x200?text=${encodeURIComponent(clinic.name)}'">
+            <h2 style="margin-top: 15px;">${clinic.name}</h2>
+            <p style="color: #666; margin-top: 5px;">${clinic.detail}</p>
+        `;
+        document.getElementById('clinic-detail-content').innerHTML = detailHTML;
+
+        // Render Services
+        const serviceList = document.getElementById('service-list');
+        serviceList.innerHTML = clinicServices.length > 0 ? '' : '<p>ยังไม่มีคอร์สให้บริการ</p>';
+        clinicServices.forEach(s => {
+            serviceList.innerHTML += `
+                <div class="service-item">
+                    <div class="service-info">
+                        <h4>${s.name}</h4>
+                        <div style="color: var(--text); font-weight: bold;">฿${s.price.toLocaleString()}</div>
+                    </div>
+                    <button class="btn" onclick="buyService(${s.id}, ${s.price}, '${s.name}')">ซื้อคอร์ส</button>
+                </div>
+            `;
+        });
+
+        navigateTo('detail-page');
+    }
+
+    // --- Wallet & Transaction Logic ---
+    function updateWalletUI() {
+        document.getElementById('wallet-balance').innerText = user.wallet.toLocaleString();
+        document.getElementById('wallet-balance-big').innerText = user.wallet.toLocaleString();
+        document.getElementById('point-balance').innerText = user.points.toLocaleString();
+        renderPurchaseHistory();
+        renderRedeemHistory();
+        renderRewardsList();
+    }
+
+    function renderRewardsList() {
+        const container = document.getElementById('rewards-list');
+        container.innerHTML = rewards.map(reward => {
+            const canRedeem = user.points >= reward.pointsRequired;
+            const buttonClass = canRedeem ? 'btn' : 'btn disabled';
+            const buttonText = canRedeem ? `ใช้ ${reward.pointsRequired.toLocaleString()} Points` : `ต้องการ ${reward.pointsRequired.toLocaleString()} Points`;
+            
+            return `
+                <div class="history-item" style="background: white; margin-top: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <div style="font-size: 2rem;">${reward.icon}</div>
+                        <div style="flex: 1;">
+                            <h4 style="color: var(--primary); margin: 0;">${reward.name}</h4>
+                            <small style="color: #666;">${reward.clinic}</small>
+                        </div>
+                    </div>
+                    <button class="${buttonClass}" onclick="redeemPoints(${reward.pointsRequired}, '${reward.name}')" style="width: 100%; margin-top: 10px;">${buttonText}</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function openPaymentMethod(method) {
+        const amount = parseInt(document.getElementById('topup-amount').value);
+        if (!amount || amount <= 0) {
+            alert("กรุณากรอกจำนวนเงินที่ถูกต้อง");
+            return;
+        }
+
+        pendingTopUpAmount = amount;
+        pendingPaymentMethod = method;
+
+        if (method === 'qr') {
+            document.getElementById('qr-amount').innerText = amount.toLocaleString();
+            document.getElementById('qr-modal').classList.add('active');
+        } else {
+            alert(`การชำระเงินผ่าน ${method === 'promptpay' ? 'PromptPay' : 'Credit/Debit Card'} กำลังมา...`);
+        }
+    }
+
+    function confirmQRPayment() {
+        user.wallet += pendingTopUpAmount;
+        updateWalletUI();
+        document.getElementById('topup-amount').value = '';
+        alert(`เติมเงินสำเร็จ ฿${pendingTopUpAmount.toLocaleString()} ผ่าน QR Payment`);
+        closeQRModal();
+    }
+
+    function closeQRModal() {
+        document.getElementById('qr-modal').classList.remove('active');
+    }
+
+    function switchHistoryTab(tab) {
+        document.querySelectorAll('.history-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('[id$="-history"]').forEach(h => h.style.display = 'none');
+        
+        if (tab === 'purchase') {
+            document.querySelectorAll('.history-tab')[0].classList.add('active');
+            document.getElementById('purchase-history').style.display = 'block';
+        } else {
+            document.querySelectorAll('.history-tab')[1].classList.add('active');
+            document.getElementById('redeem-history').style.display = 'block';
+        }
+    }
+
+    function renderPurchaseHistory() {
+        const container = document.getElementById('purchase-history');
+        if (user.purchaseHistory.length === 0) {
+            container.innerHTML = '<p style="color: #999; text-align: center;">ยังไม่มีประวัติการซื้อ</p>';
+            return;
+        }
+        
+        container.innerHTML = user.purchaseHistory.map(item => {
+            // Calculate warranty remaining days
+            const purchaseDate = new Date(item.dateObj);
+            const warrantyEnd = new Date(purchaseDate.getTime() + item.warranty * 24 * 60 * 60 * 1000);
+            const today = new Date();
+            const daysRemaining = Math.ceil((warrantyEnd - today) / (1000 * 60 * 60 * 24));
+            const warrantyStatus = daysRemaining > 0 ? `${daysRemaining} วัน` : 'หมดอายุแล้ว';
+            
+            return `
+                <div class="history-item">
+                    <div class="history-header">
+                        <div class="history-name">${item.serviceName}</div>
+                        <div class="history-price">฿${item.price.toLocaleString()}</div>
+                    </div>
+                    <div class="history-date">${item.date}</div>
+                    <div style="margin-top: 8px; font-size: 0.85rem;">
+                        <span class="warranty-badge">🛡️ รับประกัน ${warrantyStatus}</span>
+                        <span class="points-badge" style="margin-left: 8px;">⭐ +${item.pointsEarned} Points</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderRedeemHistory() {
+        const container = document.getElementById('redeem-history');
+        if (user.redeemHistory.length === 0) {
+            container.innerHTML = '<p style="color: #999; text-align: center;">ยังไม่มีประวัติการแลก Points</p>';
+            return;
+        }
+        
+        container.innerHTML = user.redeemHistory.map(item => `
+            <div class="history-item">
+                <div class="history-header">
+                    <div class="history-name">${item.rewardName}</div>
+                    <div class="history-price" style="color: #f57c00;">-${item.pointsUsed} Points</div>
+                </div>
+                <div class="history-date">${item.date}</div>
+            </div>
+        `).join('');
+    }
+
+    function buyService(serviceId, price, name) {
+        if (user.wallet < price) {
+            alert(`ยอดเงินใน Wallet ไม่เพียงพอ! (ราคา: ฿${price.toLocaleString()} / มีอยู่: ฿${user.wallet.toLocaleString()})\nกรุณาเติมเงิน`);
+            navigateTo('wallet-page');
+            return;
+        }
+
+        // Deduct Wallet
+        user.wallet -= price;
+
+        // Calculate Points correctly (ทุก 5,000 บาท ได้ 100 point)
+        const earnedPoints = Math.floor(price / 5000) * 100;
+        user.points += earnedPoints;
+
+        // Add to purchase history
+        const now = new Date();
+        const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+        user.purchaseHistory.push({
+            serviceName: name,
+            price: price,
+            pointsEarned: earnedPoints,
+            warranty: 60,
+            date: dateStr,
+            dateObj: now
+        });
+
+        updateWalletUI();
+
+        // Show Success Page
+        document.getElementById('booked-service').innerText = name;
+        document.getElementById('booked-price').innerText = price.toLocaleString();
+        navigateTo('success-page');
+    }
+
+    function redeemPoints(cost, rewardName) {
+        if (user.points < cost) {
+            alert(`Points ไม่เพียงพอ (คุณมี ${user.points} points)`);
+            return;
+        }
+        user.points -= cost;
+        
+        // Add to redeem history
+        const now = new Date();
+        const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+        user.redeemHistory.push({
+            rewardName: rewardName || 'ฉีด Botox 50 Unit (ฟรี)',
+            pointsUsed: cost,
+            date: dateStr
+        });
+        
+        updateWalletUI();
+        alert(`แลกสิทธิ์ ${rewardName || 'ฉีด Botox 50 Unit (ฟรี)'} สำเร็จ! คูปองอยู่ในกระเป๋าของคุณแล้ว`);
+    }
+
+    // Initialize
+    renderHome();
+    updateWalletUI();
+
+</script>
+
+</body>
+</html>
